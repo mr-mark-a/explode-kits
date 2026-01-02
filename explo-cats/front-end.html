@@ -563,26 +563,11 @@
     
     <script>
         // Check if we're accessing the page correctly
-        if (window.location.protocol === 'file:') {
-            document.body.innerHTML = `
-                <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; text-align: center;">
-                    <div style="background: white; padding: 40px; border-radius: 20px; max-width: 600px;">
-                        <h1 style="color: #764ba2; margin-bottom: 20px;">⚠️ Server Not Running</h1>
-                        <p style="font-size: 18px; margin-bottom: 20px;">Please start the game server first!</p>
-                        <div style="background: #f0f0f0; padding: 20px; border-radius: 10px; text-align: left;">
-                            <p style="margin-bottom: 10px; font-weight: bold;">Steps to run:</p>
-                            <ol style="padding-left: 20px;">
-                                <li>Open terminal/command prompt</li>
-                                <li>Navigate to: d:\\marks shortcuts\\SOFT\\html-ai\\explo-cats\\server</li>
-                                <li>Run: npm start</li>
-                                <li>Open browser to: <strong>http://localhost:3000/front-end.html</strong></li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            `;
-            throw new Error('Must access through server');
-        }
+        // Commented out to allow direct file access with Render server
+        // if (window.location.protocol === 'file:') {
+        //     document.body.innerHTML = `...`;
+        //     throw new Error('Must access through server');
+        // }
         
         // Initialize variables first
         let playerName = '';
@@ -592,10 +577,10 @@
         let selectedCards = [];
         let socket;
         
-        // Server URL - Update this with your Heroku app URL
+        // Server URL - Update this with your Render app URL
         const SERVER_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
-            : 'https://explo-cats-game-693012ac5a1c.herokuapp.com';
+            : 'https://explode-kits.onrender.com';
         
         // Initialize socket connection
         if (typeof io === 'undefined') {
