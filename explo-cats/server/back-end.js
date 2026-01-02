@@ -31,7 +31,8 @@ const CARD_TYPES = {
     SKIP: 'skip',
     ATTACK: 'attack',
     SHUFFLE: 'shuffle',
-    SEE_FUTURE: 'see_future'
+    SEE_FUTURE: 'see_future',
+    FAVOR: 'favor'
 };
 
 // Generate random 6-character room code
@@ -43,14 +44,15 @@ function generateRoomCode() {
 function createDeck(playerCount) {
     const deck = [];
     
-    // Add cards based on player count
-    const explodingKittens = playerCount - 1;
+    // Add cards based on player count (according to official rules)
+    const explodingKittens = 4; // Always start with 4 Exploding Kittens
     const defuses = 6;
     const nopes = 5;
     const skips = 4;
     const attacks = 4;
     const shuffles = 4;
     const seeFutures = 5;
+    const favors = 4;
     const beardCats = 4;
     const hringgs = 4;
     const tacocats = 4;
@@ -79,6 +81,10 @@ function createDeck(playerCount) {
     
     for (let i = 0; i < seeFutures; i++) {
         deck.push({ type: CARD_TYPES.SEE_FUTURE, id: `see_future_${i}` });
+    }
+    
+    for (let i = 0; i < favors; i++) {
+        deck.push({ type: CARD_TYPES.FAVOR, id: `favor_${i}` });
     }
     
     for (let i = 0; i < beardCats; i++) {
@@ -161,8 +167,8 @@ function startGame(roomCode) {
             player.hand.push(room.deck.splice(defuseIndex, 1)[0]);
         }
         
-        // Deal 4 more cards
-        for (let i = 0; i < 4; i++) {
+        // Deal 7 more cards (per official rules)
+        for (let i = 0; i < 7; i++) {
             if (room.deck.length > 0) {
                 player.hand.push(room.deck.pop());
             }
@@ -360,6 +366,22 @@ io.on('connection', (socket) => {
                 socket.emit('see-future', topCards);
                 break;
                 
+            case CARD_TYPES.FAVOR:
+                if (!targetPlayerId) {
+                    socket.emit('error', 'Must select a target player');
+                    return;
+                }
+                player.hand.splice(cardIndex, 1);
+                room.discardPile.push(card);
+                // Request target player to give a card
+                room.pendingAction = {
+                    type: 'favor-request',
+                    requesterId: socket.id,
+                    targetId: targetPlayerId
+                };
+                io.to(targetPlayerId).emit('favor-requested', { byPlayer: player.name, requesterId: socket.id });
+                break;
+                
             case CARD_TYPES.NOPE:
                 // Nope is handled separately as a reaction
                 break;
@@ -428,6 +450,29 @@ io.on('connection', (socket) => {
             }
         }
         
+        broadcastGameState(roomCode);
+    });
+    
+    // Give card for Favor
+    socket.on('give-card-for-favor', ({ roomCode, cardId }) => {
+        const room = rooms.get(roomCode);
+        if (!room || !room.pendingAction || room.pendingAction.type !== 'favor-request') return;
+        
+        if (socket.id !== room.pendingAction.targetId) return;
+        
+        const targetPlayer = room.players.get(socket.id);
+        const cardIndex = targetPlayer.hand.findIndex(card => card.id === cardId);
+        
+        if (cardIndex === -1) return;
+        
+        const card = targetPlayer.hand.splice(cardIndex, 1)[0];
+        const requester = room.players.get(room.pendingAction.requesterId);
+        requester.hand.push(card);
+        
+        io.to(room.pendingAction.requesterId).emit('card-received', card);
+        socket.emit('card-given', { toPlayer: requester.name });
+        
+        room.pendingAction = null;
         broadcastGameState(roomCode);
     });
     
