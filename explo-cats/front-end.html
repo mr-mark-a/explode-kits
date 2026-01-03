@@ -576,6 +576,136 @@
             border-color: #764ba2;
         }
         
+        #spectator-screen .player-card {
+            position: relative;
+        }
+        
+        .spectator-cards {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .spectator-cards .card {
+            width: 60px;
+            height: 84px;
+            font-size: 8px;
+            cursor: default;
+        }
+        
+        .spectator-cards .card:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Video Chat Styles */
+        .video-chat-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-width: 400px;
+            z-index: 100;
+            justify-content: flex-end;
+        }
+        
+        .video-box {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            position: relative;
+            border: 2px solid #667eea;
+        }
+        
+        /* Dynamic sizing based on number of players */
+        .video-chat-container.players-1 .video-box {
+            width: 180px;
+            height: 135px;
+        }
+        
+        .video-chat-container.players-2 .video-box {
+            width: 160px;
+            height: 120px;
+        }
+        
+        .video-chat-container.players-3 .video-box,
+        .video-chat-container.players-4 .video-box {
+            width: 140px;
+            height: 105px;
+        }
+        
+        .video-chat-container.players-5 .video-box,
+        .video-chat-container.players-6 .video-box {
+            width: 120px;
+            height: 90px;
+        }
+        
+        .video-chat-container.players-7 .video-box,
+        .video-chat-container.players-8 .video-box {
+            width: 100px;
+            height: 75px;
+        }
+        
+        .video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .video-box .player-name-tag {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .video-box .audio-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .video-box .audio-indicator.speaking {
+            background: rgba(102, 126, 234, 0.9);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        #countdown-display {
+            animation: countdownPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes countdownPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
         /* Card Animations */
         @keyframes cardSelected {
             0%, 100% {
@@ -650,6 +780,18 @@
             70% { transform: translate(-3px, 1px); }
             80% { transform: translate(3px, -1px); }
             90% { transform: translate(-1px, 0px); }
+        }
+        
+        @keyframes deckShuffle {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-5deg) scale(1.1) translateX(-10px); }
+            50% { transform: rotate(5deg) scale(1.1) translateX(10px); }
+            75% { transform: rotate(-3deg) scale(1.05) translateX(-5px); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+        
+        .deck-pile.shuffling {
+            animation: deckShuffle 0.8s ease-in-out;
         }
         
         /* Mobile Responsive Styles */
@@ -888,6 +1030,44 @@
             .modal-content {
                 padding: 15px;
             }
+            
+            .video-chat-container {
+                top: 10px;
+                right: 10px;
+                max-width: 200px;
+                gap: 6px;
+            }
+            
+            .video-chat-container.players-1 .video-box {
+                width: 120px;
+                height: 90px;
+            }
+            
+            .video-chat-container.players-2 .video-box,
+            .video-chat-container.players-3 .video-box,
+            .video-chat-container.players-4 .video-box {
+                width: 90px;
+                height: 68px;
+            }
+            
+            .video-chat-container.players-5 .video-box,
+            .video-chat-container.players-6 .video-box,
+            .video-chat-container.players-7 .video-box,
+            .video-chat-container.players-8 .video-box {
+                width: 75px;
+                height: 56px;
+            }
+            
+            .video-box .player-name-tag {
+                font-size: 9px;
+                padding: 2px 4px;
+            }
+            
+            .video-box .audio-indicator {
+                width: 16px;
+                height: 16px;
+                font-size: 10px;
+            }
         }
     </style>
 </head>
@@ -947,8 +1127,39 @@
             </div>
         </div>
         
+        <!-- Spectator Screen -->
+        <div class="screen" id="spectator-screen">
+            <h1>👻 Spectator Mode</h1>
+            <!-- Video Chat Container -->
+            <div class="video-chat-container" id="spectator-video-chat-container"></div>
+            
+            <div class="game-board">
+                <div class="game-info">
+                    <div class="info-item deck-area">
+                        <div>Draw Pile</div>
+                        <div class="deck-pile" id="spectator-deck-count">0</div>
+                    </div>
+                    <div class="info-item" id="spectator-turn-info">
+                        <div class="turn-indicator">Spectating...</div>
+                    </div>
+                </div>
+                
+                <div class="players-area" id="spectator-players-area"></div>
+                
+                <div class="my-hand">
+                    <h2>You are eliminated - Spectating</h2>
+                    <div class="menu-buttons">
+                        <button onclick="backToMenu()">Exit to Main Menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Game Screen -->
         <div class="screen" id="game-screen">
+            <!-- Video Chat Container -->
+            <div class="video-chat-container" id="video-chat-container"></div>
+            
             <div class="game-board">
                 <div class="game-info">
                     <div class="info-item deck-area">
@@ -975,6 +1186,21 @@
         </div>
         
         <!-- Modals -->
+        <div class="modal" id="server-waking-modal">
+            <div class="modal-content">
+                <h2>⏳ Server Waking Up...</h2>
+                <p>The server is starting up. Please wait...</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <div id="countdown-display" style="font-size: 48px; font-weight: bold; color: #667eea;">30</div>
+                    <div style="margin-top: 10px; color: #666;">seconds remaining</div>
+                </div>
+                <div style="text-align: center; color: #999; font-size: 14px;">
+                    This only happens after periods of inactivity.<br>
+                    Future connections will be instant!
+                </div>
+            </div>
+        </div>
+        
         <div class="modal" id="target-modal">
             <div class="modal-content">
                 <h2>Select Target Player</h2>
@@ -989,8 +1215,10 @@
             <div class="modal-content">
                 <h2>💥 You Exploded! 💥</h2>
                 <p>You drew an exploding kitten and had no defuse!</p>
+                <p>You have been eliminated from the game.</p>
                 <div class="menu-buttons">
-                    <button onclick="closeExplodedModal()">OK</button>
+                    <button onclick="enterSpectatorMode()">Spectate Game</button>
+                    <button onclick="backToMenu()">Exit to Main Menu</button>
                 </div>
             </div>
         </div>
@@ -1008,10 +1236,9 @@
         <div class="modal" id="defuse-modal">
             <div class="modal-content">
                 <h2>💣 You drew an Exploding Kitten!</h2>
-                <p>You used a Defuse! Place the kitten back in the deck:</p>
-                <input type="number" id="kitten-position" min="0" placeholder="Position (0 = top)">
+                <p>You used a Defuse! The kitten will be randomly placed back in the deck...</p>
                 <div class="menu-buttons">
-                    <button onclick="placeKitten()">Place Kitten</button>
+                    <button onclick="placeKittenRandomly()">Continue</button>
                 </div>
             </div>
         </div>
@@ -1052,6 +1279,21 @@
         let selectedCards = [];
         let socket;
         
+        // WebRTC variables
+        let localStream = null;
+        let peerConnections = {};
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+        
+        // Server wake tracking
+        let isServerWaking = false;
+        let countdownInterval = null;
+        let serverWakeTimeout = null;
+        
         // Server URL - Update this with your Render app URL
         const SERVER_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000' 
@@ -1061,11 +1303,28 @@
         if (typeof io === 'undefined') {
             alert('Socket.IO not loaded. Please ensure you are accessing the page correctly');
         } else {
-            socket = io(SERVER_URL);
+            socket = io(SERVER_URL, {
+                timeout: 30000,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 2000
+            });
+            
+            socket.on('connect', () => {
+                console.log('Connected to server!');
+                if (isServerWaking) {
+                    hideServerWakingModal();
+                }
+            });
             
             socket.on('connect_error', (error) => {
                 console.error('Connection error:', error);
-                alert('Cannot connect to game server. Please ensure the server is running!');
+                if (!isServerWaking) {
+                    console.log('Server may be waking up...');
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
             });
         }
         
@@ -1125,7 +1384,19 @@
                 alert('Please enter your name');
                 return;
             }
-            socket.emit('host-game', playerName);
+            
+            // Check if socket is connected
+            if (!socket.connected) {
+                showServerWakingModal();
+                // Wait for connection then emit
+                const connectHandler = () => {
+                    socket.emit('host-game', playerName);
+                    socket.off('connect', connectHandler);
+                };
+                socket.on('connect', connectHandler);
+            } else {
+                socket.emit('host-game', playerName);
+            }
         }
         
         function showJoinScreen() {
@@ -1143,7 +1414,19 @@
                 showError('join-error', 'Please enter a room code');
                 return;
             }
-            socket.emit('join-game', { roomCode, playerName });
+            
+            // Check if socket is connected
+            if (!socket.connected) {
+                showServerWakingModal();
+                // Wait for connection then emit
+                const connectHandler = () => {
+                    socket.emit('join-game', { roomCode, playerName });
+                    socket.off('connect', connectHandler);
+                };
+                socket.on('connect', connectHandler);
+            } else {
+                socket.emit('join-game', { roomCode, playerName });
+            }
         }
         
         function startGame() {
@@ -1187,15 +1470,22 @@
             if (startBtn) {
                 startBtn.disabled = playerList.length < 2;
             }
+            
+            // Update video chat if game is active
+            if (localStream && gameState) {
+                updateVideoConnections(playerList);
+            }
         });
         
-        socket.on('game-started', () => {
+        socket.on('game-started', async () => {
             showScreen('game-screen');
+            await initializeVideoChat();
         });
         
         socket.on('game-state-update', (state) => {
             gameState = state;
             updateGameUI();
+            updateSpectatorUI();
         });
         
         socket.on('turn-changed', (data) => {
@@ -1225,22 +1515,37 @@
         socket.on('drew-exploding-kitten', (data) => {
             if (data.hasDefuse) {
                 document.getElementById('defuse-modal').classList.add('active');
+            } else {
+                // Player exploded without defuse - show explosion then modal
+                const gameScreen = document.getElementById('game-screen');
+                gameScreen.classList.add('exploding');
+                setTimeout(() => gameScreen.classList.remove('exploding'), 500);
+                
+                setTimeout(() => {
+                    document.getElementById('exploded-modal').classList.add('active');
+                }, 500);
             }
         });
         
-        socket.on('player-exploded', () => {
-            // Trigger explosion animation
-            const gameScreen = document.getElementById('game-screen');
-            gameScreen.classList.add('exploding');
-            setTimeout(() => gameScreen.classList.remove('exploding'), 500);
-            
-            // Show modal after animation
-            setTimeout(() => {
-                document.getElementById('exploded-modal').classList.add('active');
-            }, 500);
+        socket.on('player-exploded', (data) => {
+            // Just update game state, modal is shown by drew-exploding-kitten event
+            console.log('Player exploded:', data);
         });
         
         socket.on('kitten-placed', () => {
+            // Trigger deck shuffle animation
+            const deckPile = document.getElementById('deck-count');
+            const spectatorDeck = document.getElementById('spectator-deck-count');
+            
+            if (deckPile) {
+                deckPile.classList.add('shuffling');
+                setTimeout(() => deckPile.classList.remove('shuffling'), 800);
+            }
+            if (spectatorDeck) {
+                spectatorDeck.classList.add('shuffling');
+                setTimeout(() => spectatorDeck.classList.remove('shuffling'), 800);
+            }
+            
             closeDefuseModal();
         });
         
@@ -1287,6 +1592,23 @@
         
         socket.on('card-received', (card) => {
             console.log('Received card:', card);
+        });
+        
+        // WebRTC signaling handlers
+        socket.on('webrtc-offer', async (data) => {
+            await handleWebRTCOffer(data);
+        });
+        
+        socket.on('webrtc-answer', async (data) => {
+            await handleWebRTCAnswer(data);
+        });
+        
+        socket.on('webrtc-ice-candidate', async (data) => {
+            await handleICECandidate(data);
+        });
+        
+        socket.on('peer-disconnected', (peerId) => {
+            closePeerConnection(peerId);
         });
         
         // UI update functions
@@ -1491,18 +1813,88 @@
             document.getElementById('target-modal').classList.remove('active');
         }
         
-        function placeKitten() {
-            const position = parseInt(document.getElementById('kitten-position').value) || 0;
-            socket.emit('place-exploding-kitten', { roomCode, position });
+        function placeKittenRandomly() {
+            // Generate random position (0 to deck size)
+            const randomPosition = Math.floor(Math.random() * (gameState.deckCount + 1));
+            socket.emit('place-exploding-kitten', { roomCode, position: randomPosition });
         }
         
         function closeDefuseModal() {
             document.getElementById('defuse-modal').classList.remove('active');
-            document.getElementById('kitten-position').value = '';
         }
         
         function closeExplodedModal() {
             document.getElementById('exploded-modal').classList.remove('active');
+        }
+        
+        function enterSpectatorMode() {
+            closeExplodedModal();
+            showScreen('spectator-screen');
+            updateSpectatorUI();
+        }
+        
+        function updateSpectatorUI() {
+            if (!gameState) return;
+            
+            const currentScreen = document.querySelector('.screen.active');
+            if (currentScreen && currentScreen.id !== 'spectator-screen') return;
+            
+            // Update spectator deck count
+            const spectatorDeck = document.getElementById('spectator-deck-count');
+            if (spectatorDeck) {
+                spectatorDeck.setAttribute('data-count', gameState.deckCount);
+            }
+            
+            // Update spectator turn info
+            const spectatorTurnInfo = document.getElementById('spectator-turn-info');
+            if (spectatorTurnInfo) {
+                const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
+                spectatorTurnInfo.innerHTML = `
+                    <div class="turn-indicator">
+                        👻 Spectating - ${currentPlayer ? currentPlayer.name + "'s Turn" : 'Game in Progress'}
+                    </div>
+                `;
+            }
+            
+            // Update spectator players area with visible cards
+            const spectatorPlayersArea = document.getElementById('spectator-players-area');
+            if (spectatorPlayersArea) {
+                spectatorPlayersArea.innerHTML = gameState.players.map(p => {
+                    const isCurrentTurn = p.id === gameState.currentPlayerId;
+                    
+                    // Show cards for all players in spectator mode
+                    let cardsHTML = '';
+                    if (p.cards && p.cards.length > 0) {
+                        const cardGroups = {};
+                        p.cards.forEach(card => {
+                            if (!cardGroups[card.type]) {
+                                cardGroups[card.type] = [];
+                            }
+                            cardGroups[card.type].push(card);
+                        });
+                        
+                        cardsHTML = '<div class="spectator-cards">' + 
+                            Object.entries(cardGroups).map(([type, cards]) => {
+                                const count = cards.length;
+                                return `
+                                    <div class="card ${type}" title="${cardNames[type]}">
+                                        <img src="${cardImages[type] || 'assets/cards/card-back.jpg'}" alt="${cardNames[type]}" />
+                                        ${count > 1 ? `<div class="card-count-badge">${count}</div>` : ''}
+                                    </div>
+                                `;
+                            }).join('') + '</div>';
+                    }
+                    
+                    return `
+                        <div class="player-card ${isCurrentTurn ? 'current-turn' : ''} ${!p.alive ? 'dead' : ''}">
+                            <h3>${p.name}</h3>
+                            <div class="card-count">${p.cardCount} 🃏</div>
+                            <div>${p.alive ? '✅ Alive' : '💀 Dead'}</div>
+                            ${cardsHTML}
+                        </div>
+                    `;
+                }).join('');
+            }
         }
         
         function closeSeeFutureModal() {
@@ -1543,6 +1935,307 @@
         function endTurn() {
             selectedCards = [];
             updateGameUI();
+        }
+        
+        // ========== WebRTC Video Chat Functions ==========
+        
+        async function initializeVideoChat() {
+            try {
+                // Request camera and microphone access
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 320, height: 240 },
+                    audio: true
+                });
+                
+                console.log('Local stream initialized');
+                
+                // Create peer connections for all other players
+                if (gameState && gameState.players) {
+                    const otherPlayers = gameState.players.filter(p => p.id !== socket.id);
+                    for (const player of otherPlayers) {
+                        await createPeerConnection(player.id, player.name, true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Could not access camera/microphone. Video chat will be disabled.');
+            }
+        }
+        
+        async function createPeerConnection(peerId, peerName, createOffer) {
+            if (peerConnections[peerId]) return;
+            
+            const peerConnection = new RTCPeerConnection(configuration);
+            peerConnections[peerId] = { connection: peerConnection, name: peerName };
+            
+            // Add local stream tracks to peer connection
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+            }
+            
+            // Handle incoming remote stream
+            peerConnection.ontrack = (event) => {
+                console.log('Received remote track from', peerName);
+                addRemoteVideo(peerId, peerName, event.streams[0]);
+            };
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc-ice-candidate', {
+                        roomCode,
+                        targetId: peerId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            // Handle connection state changes
+            peerConnection.onconnectionstatechange = () => {
+                console.log(`Connection state with ${peerName}:`, peerConnection.connectionState);
+                if (peerConnection.connectionState === 'disconnected' || 
+                    peerConnection.connectionState === 'failed') {
+                    closePeerConnection(peerId);
+                }
+            };
+            
+            // Create and send offer if initiator
+            if (createOffer) {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('webrtc-offer', {
+                    roomCode,
+                    targetId: peerId,
+                    offer: offer
+                });
+            }
+        }
+        
+        async function handleWebRTCOffer(data) {
+            const { fromId, fromName, offer } = data;
+            
+            await createPeerConnection(fromId, fromName, false);
+            const peerConnection = peerConnections[fromId].connection;
+            
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            
+            socket.emit('webrtc-answer', {
+                roomCode,
+                targetId: fromId,
+                answer: answer
+            });
+        }
+        
+        async function handleWebRTCAnswer(data) {
+            const { fromId, answer } = data;
+            
+            if (peerConnections[fromId]) {
+                const peerConnection = peerConnections[fromId].connection;
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            }
+        }
+        
+        async function handleICECandidate(data) {
+            const { fromId, candidate } = data;
+            
+            if (peerConnections[fromId]) {
+                const peerConnection = peerConnections[fromId].connection;
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            }
+        }
+        
+        function addRemoteVideo(peerId, peerName, stream) {
+            // Remove existing video if any
+            removeRemoteVideo(peerId);
+            
+            // Determine which container to use
+            const activeScreen = document.querySelector('.screen.active');
+            let container;
+            if (activeScreen && activeScreen.id === 'spectator-screen') {
+                container = document.getElementById('spectator-video-chat-container');
+            } else {
+                container = document.getElementById('video-chat-container');
+            }
+            
+            if (!container) return;
+            
+            // Create video element
+            const videoBox = document.createElement('div');
+            videoBox.className = 'video-box';
+            videoBox.id = `video-${peerId}`;
+            
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            
+            const nameTag = document.createElement('div');
+            nameTag.className = 'player-name-tag';
+            nameTag.textContent = peerName;
+            
+            const audioIndicator = document.createElement('div');
+            audioIndicator.className = 'audio-indicator';
+            audioIndicator.textContent = '🎤';
+            
+            videoBox.appendChild(video);
+            videoBox.appendChild(nameTag);
+            videoBox.appendChild(audioIndicator);
+            container.appendChild(videoBox);
+            
+            // Update container class based on number of videos
+            updateVideoContainerSize(container);
+            
+            // Monitor audio levels
+            monitorAudioLevel(stream, audioIndicator);
+        }
+        
+        function removeRemoteVideo(peerId) {
+            const videoElement = document.getElementById(`video-${peerId}`);
+            if (videoElement) {
+                videoElement.remove();
+                updateVideoContainerSize();
+            }
+        }
+        
+        function updateVideoContainerSize(container) {
+            // Update both containers
+            const containers = [
+                document.getElementById('video-chat-container'),
+                document.getElementById('spectator-video-chat-container')
+            ];
+            
+            containers.forEach(cont => {
+                if (!cont) return;
+                const videoCount = cont.querySelectorAll('.video-box').length;
+                cont.className = 'video-chat-container players-' + Math.min(videoCount, 8);
+            });
+        }
+        
+        function monitorAudioLevel(stream, indicator) {
+            try {
+                const audioContext = new AudioContext();
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                analyser.fftSize = 256;
+                
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                function checkLevel() {
+                    analyser.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    
+                    if (average > 20) {
+                        indicator.classList.add('speaking');
+                    } else {
+                        indicator.classList.remove('speaking');
+                    }
+                    
+                    requestAnimationFrame(checkLevel);
+                }
+                
+                checkLevel();
+            } catch (error) {
+                console.error('Error monitoring audio:', error);
+            }
+        }
+        
+        function closePeerConnection(peerId) {
+            if (peerConnections[peerId]) {
+                peerConnections[peerId].connection.close();
+                delete peerConnections[peerId];
+                removeRemoteVideo(peerId);
+            }
+        }
+        
+        function updateVideoConnections(playerList) {
+            // This is called when player list updates during game
+            const currentPeerIds = Object.keys(peerConnections);
+            const activePeerIds = playerList
+                .filter(p => p.id !== socket.id)
+                .map(p => p.id);
+            
+            // Remove disconnected peers
+            currentPeerIds.forEach(peerId => {
+                if (!activePeerIds.includes(peerId)) {
+                    closePeerConnection(peerId);
+                }
+            });
+            
+            // Add new peers
+            playerList.forEach(player => {
+                if (player.id !== socket.id && !peerConnections[player.id]) {
+                    createPeerConnection(player.id, player.name, true);
+                }
+            });
+        }
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            Object.keys(peerConnections).forEach(peerId => {
+                closePeerConnection(peerId);
+            });
+        });
+        
+        // ========== Server Wake Functions ==========
+        
+        function showServerWakingModal() {
+            isServerWaking = true;
+            document.getElementById('server-waking-modal').classList.add('active');
+            
+            let countdown = 30;
+            const countdownDisplay = document.getElementById('countdown-display');
+            countdownDisplay.textContent = countdown;
+            
+            // Clear any existing intervals
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            if (serverWakeTimeout) {
+                clearTimeout(serverWakeTimeout);
+            }
+            
+            // Start countdown
+            countdownInterval = setInterval(() => {
+                countdown--;
+                countdownDisplay.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }, 1000);
+            
+            // Auto-hide after 35 seconds (safety timeout)
+            serverWakeTimeout = setTimeout(() => {
+                if (isServerWaking) {
+                    hideServerWakingModal();
+                    if (!socket.connected) {
+                        alert('Server is taking longer than expected. Please try again.');
+                    }
+                }
+            }, 35000);
+        }
+        
+        function hideServerWakingModal() {
+            isServerWaking = false;
+            document.getElementById('server-waking-modal').classList.remove('active');
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            if (serverWakeTimeout) {
+                clearTimeout(serverWakeTimeout);
+                serverWakeTimeout = null;
+            }
         }
     </script>
 </body>

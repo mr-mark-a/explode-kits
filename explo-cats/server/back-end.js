@@ -35,9 +35,9 @@ const CARD_TYPES = {
     FAVOR: 'favor'
 };
 
-// Generate random 6-character room code
+// Generate random 2-digit room code
 function generateRoomCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    return String(Math.floor(Math.random() * 90) + 10);
 }
 
 // Create initial deck
