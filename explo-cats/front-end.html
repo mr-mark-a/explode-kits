@@ -249,6 +249,56 @@
             display: block;
         }
         
+        .card-stack {
+            position: relative;
+        }
+        
+        .card-stack::before,
+        .card-stack::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            background-image: url('assets/cards/card-back.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 3px solid #000;
+            border-radius: 12px;
+            z-index: -1;
+        }
+        
+        .card-stack::before {
+            top: -5px;
+            left: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-stack::after {
+            top: -10px;
+            left: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-count-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            border: 2px solid #000;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
         .card:hover {
             transform: translateY(-12px) scale(1.05);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
@@ -713,6 +763,14 @@
             .card-icon {
                 font-size: 32px;
                 margin-bottom: 4px;
+            }
+            
+            .card-count-badge {
+                width: 22px;
+                height: 22px;
+                font-size: 11px;
+                top: 3px;
+                right: 3px;
             }
             
             .card:hover {
@@ -1263,25 +1321,64 @@
                 `;
             }).join('');
             
-            // Update my hand
+            // Update my hand - group cards by type
             const myCardsEl = document.getElementById('my-cards');
-            myCardsEl.innerHTML = gameState.myHand.map(card => `
-                <div class="card ${card.type} ${selectedCards.includes(card.id) ? 'selected' : ''}" 
-                     onclick="toggleCardSelection('${card.id}')">
-                    <img src="${cardImages[card.type] || 'assets/cards-set-1.jpg'}" alt="${cardNames[card.type]}" />
-                </div>
-            `).join('');
+            
+            // Group cards by type
+            const cardGroups = {};
+            gameState.myHand.forEach(card => {
+                if (!cardGroups[card.type]) {
+                    cardGroups[card.type] = [];
+                }
+                cardGroups[card.type].push(card);
+            });
+            
+            // Render grouped cards
+            myCardsEl.innerHTML = Object.entries(cardGroups).map(([type, cards]) => {
+                const count = cards.length;
+                const firstCard = cards[0];
+                const isSelected = selectedCards.some(id => cards.find(c => c.id === id));
+                const selectedCount = cards.filter(c => selectedCards.includes(c.id)).length;
+                
+                return `
+                    <div class="card ${type} ${count > 1 ? 'card-stack' : ''} ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleCardSelection('${firstCard.id}', '${type}')" 
+                         data-card-type="${type}">
+                        <img src="${cardImages[type] || 'assets/cards/card-back.jpg'}" alt="${cardNames[type]}" />
+                        ${count > 1 ? `<div class="card-count-badge">${selectedCount > 0 ? selectedCount + '/' : ''}${count}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
             
             updateActionButtons();
         }
         
-        function toggleCardSelection(cardId) {
-            const index = selectedCards.indexOf(cardId);
-            if (index > -1) {
-                selectedCards.splice(index, 1);
+        function toggleCardSelection(cardId, cardType) {
+            // Get all cards of this type
+            const cardsOfType = gameState.myHand.filter(c => c.type === cardType);
+            
+            // Check how many of this type are currently selected
+            const selectedOfType = cardsOfType.filter(c => selectedCards.includes(c.id));
+            
+            if (selectedOfType.length === 0) {
+                // None selected, select the first one
+                selectedCards.push(cardsOfType[0].id);
+            } else if (selectedOfType.length < cardsOfType.length) {
+                // Some selected, select one more
+                const nextCard = cardsOfType.find(c => !selectedCards.includes(c.id));
+                if (nextCard) {
+                    selectedCards.push(nextCard.id);
+                }
             } else {
-                selectedCards.push(cardId);
+                // All selected, deselect all
+                selectedOfType.forEach(card => {
+                    const index = selectedCards.indexOf(card.id);
+                    if (index > -1) {
+                        selectedCards.splice(index, 1);
+                    }
+                });
             }
+            
             updateGameUI();
         }
         
