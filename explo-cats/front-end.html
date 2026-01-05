@@ -143,6 +143,11 @@
             font-size: 12px;
         }
         
+        .badge.ai {
+            background: #ffc107;
+            color: #000;
+        }
+        
         .game-board {
             display: grid;
             grid-template-rows: auto 1fr auto;
@@ -692,6 +697,170 @@
             animation: pulse 1s infinite;
         }
         
+        .video-box .mute-toggle {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 24px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 15;
+        }
+        
+        .video-box .mute-toggle:hover {
+            background: rgba(102, 126, 234, 0.9);
+            transform: scale(1.1);
+        }
+        
+        .video-box .mute-toggle.muted {
+            background: rgba(220, 53, 69, 0.9);
+        }
+        
+        .local-video-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 101;
+        }
+        
+        .local-control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .local-control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .local-control-btn.muted {
+            background: rgba(220, 53, 69, 0.9);
+        }
+        
+        .local-control-btn.active {
+            background: rgba(40, 167, 69, 0.9);
+        }
+        
+        .sharing-toggle-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .sharing-toggle {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sharing-toggle:hover {
+            border-color: #667eea;
+        }
+        
+        .sharing-toggle.enabled {
+            border-color: #28a745;
+            background: #e7f5ec;
+        }
+        
+        .sharing-toggle input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .sharing-toggle label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .audio-select-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .audio-select-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .audio-select-item:hover {
+            background: #e9ecef;
+        }
+        
+        .audio-select-item.selected {
+            background: #e7f0ff;
+            border-color: #667eea;
+        }
+        
+        .audio-select-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .audio-select-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .select-all-audio {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .select-all-audio:hover {
+            background: #5568d3;
+        }
+        
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -1095,6 +1264,7 @@
                 <div id="host-player-list"></div>
             </div>
             <div class="menu-buttons">
+                <button onclick="addAIPlayer()" id="add-ai-btn" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">🤖 Add AI Player</button>
                 <button onclick="startGame()" id="start-game-btn">Start Game</button>
                 <button onclick="backToMenu()">Back to Menu</button>
             </div>
@@ -1261,6 +1431,39 @@
                 <div id="favor-cards"></div>
             </div>
         </div>
+        
+        <!-- Audio/Video Selection Modal -->
+        <div class="modal" id="audio-select-modal">
+            <div class="modal-content">
+                <h2>🎤📹 Share With Players</h2>
+                <div class="sharing-toggle-group">
+                    <div class="sharing-toggle" id="master-audio-toggle" onclick="toggleMasterSharing('audio')">
+                        <input type="checkbox" id="master-audio-cb" onclick="event.stopPropagation(); toggleMasterSharing('audio');">
+                        <label for="master-audio-cb">🎤 Enable Audio</label>
+                    </div>
+                    <div class="sharing-toggle" id="master-video-toggle" onclick="toggleMasterSharing('video')">
+                        <input type="checkbox" id="master-video-cb" onclick="event.stopPropagation(); toggleMasterSharing('video');">
+                        <label for="master-video-cb">📹 Enable Camera</label>
+                    </div>
+                </div>
+                <p><strong>Select who can see/hear you:</strong></p>
+                <button class="select-all-audio" onclick="toggleAllSharing()">Toggle All Players</button>
+                <div class="audio-select-list" id="audio-select-list"></div>
+                <div class="menu-buttons">
+                    <button onclick="closeAudioSelectModal()">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Local Video Controls -->
+    <div class="local-video-controls" id="local-video-controls" style="display: none;">
+        <button class="local-control-btn" id="toggle-audio-btn" onclick="toggleLocalAudio()" title="Microphone">
+            🎤
+        </button>
+        <button class="local-control-btn" id="toggle-video-btn" onclick="toggleLocalVideo()" title="Camera">
+            📹
+        </button>
     </div>
     
     <script>
@@ -1282,6 +1485,10 @@
         // WebRTC variables
         let localStream = null;
         let peerConnections = {};
+        let audioSharingEnabled = {}; // Track which peers can hear us
+        let videoSharingEnabled = {}; // Track which peers can see us
+        let localAudioEnabled = false; // Track if local mic is on (default off)
+        let localVideoEnabled = false; // Track if local camera is on (default off)
         const configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -1433,6 +1640,16 @@
             socket.emit('start-game', roomCode);
         }
         
+        function addAIPlayer() {
+            if (!roomCode) {
+                console.error('No room code available');
+                alert('Error: Room not initialized');
+                return;
+            }
+            console.log('Adding AI player to room:', roomCode);
+            socket.emit('add-ai-player', roomCode);
+        }
+        
         function backToMenu() {
             location.reload();
         }
@@ -1448,6 +1665,7 @@
         socket.on('room-created', (data) => {
             roomCode = data.roomCode;
             document.getElementById('host-room-code').textContent = roomCode;
+            console.log('Room created:', roomCode);
             showScreen('host-screen');
         });
         
@@ -1479,6 +1697,8 @@
         
         socket.on('game-started', async () => {
             showScreen('game-screen');
+            // Always show audio controls
+            document.getElementById('local-video-controls').style.display = 'flex';
             await initializeVideoChat();
         });
         
@@ -1611,13 +1831,21 @@
             closePeerConnection(peerId);
         });
         
+        socket.on('ai-exploded', (data) => {
+            console.log(`${data.name} exploded!`);
+            // Could show a notification if desired
+        });
+        
         // UI update functions
         function updatePlayerList(elementId, players) {
             const listEl = document.getElementById(elementId);
             listEl.innerHTML = players.map(p => `
                 <div class="player-item ${p.isHost ? 'host' : ''}">
                     <span>${p.name}</span>
-                    ${p.isHost ? '<span class="badge">Host</span>' : ''}
+                    <div>
+                        ${p.isHost ? '<span class="badge">Host</span>' : ''}
+                        ${p.isAI ? '<span class="badge ai">AI</span>' : ''}
+                    </div>
                 </div>
             `).join('');
         }
@@ -1947,18 +2175,33 @@
                     audio: true
                 });
                 
-                console.log('Local stream initialized');
+                console.log('Local stream initialized - Video chat available');
+                
+                // Disable tracks by default
+                localStream.getAudioTracks().forEach(track => track.enabled = false);
+                localStream.getVideoTracks().forEach(track => track.enabled = false);
                 
                 // Create peer connections for all other players
                 if (gameState && gameState.players) {
                     const otherPlayers = gameState.players.filter(p => p.id !== socket.id);
+                    
+                    // Initialize sharing as disabled by default
+                    otherPlayers.forEach(p => {
+                        audioSharingEnabled[p.id] = false;
+                        videoSharingEnabled[p.id] = false;
+                    });
+                    
                     for (const player of otherPlayers) {
                         await createPeerConnection(player.id, player.name, true);
                     }
                 }
+                
+                // Update button states
+                updateControlButtonUI();
             } catch (error) {
                 console.error('Error accessing media devices:', error);
-                alert('Could not access camera/microphone. Video chat will be disabled.');
+                console.log('Video chat disabled - microphone button will still be visible for UI testing');
+                // Don't alert, just log - controls are already visible for testing
             }
         }
         
@@ -2081,6 +2324,21 @@
             audioIndicator.className = 'audio-indicator';
             audioIndicator.textContent = '🎤';
             
+            // Add mute toggle button (only show if more than 2 players)
+            const totalPlayers = gameState ? gameState.players.length : 0;
+            if (totalPlayers > 2) {
+                const muteToggle = document.createElement('div');
+                muteToggle.className = 'mute-toggle';
+                muteToggle.id = `mute-${peerId}`;
+                muteToggle.textContent = audioSharingEnabled[peerId] ? '🔊' : '🔇';
+                muteToggle.title = audioSharingEnabled[peerId] ? 'They can hear you' : 'They cannot hear you';
+                muteToggle.onclick = () => togglePeerAudio(peerId);
+                if (!audioSharingEnabled[peerId]) {
+                    muteToggle.classList.add('muted');
+                }
+                videoBox.appendChild(muteToggle);
+            }
+            
             videoBox.appendChild(video);
             videoBox.appendChild(nameTag);
             videoBox.appendChild(audioIndicator);
@@ -2172,6 +2430,247 @@
                     createPeerConnection(player.id, player.name, true);
                 }
             });
+        }
+        
+        // Audio control functions
+        function togglePeerAudio(peerId) {
+            audioSharingEnabled[peerId] = !audioSharingEnabled[peerId];
+            updatePeerAudioTrack(peerId);
+            updateMuteButtonUI(peerId);
+            
+            // Also update in audio select modal if open
+            const checkbox = document.getElementById(`audio-cb-${peerId}`);
+            if (checkbox) {
+                checkbox.checked = audioSharingEnabled[peerId];
+                updateAudioSelectItemUI(peerId);
+            }
+        }
+        
+        function updatePeerAudioTrack(peerId) {
+            if (!peerConnections[peerId] || !localStream) return;
+            
+            const connection = peerConnections[peerId].connection;
+            const audioTrack = localStream.getAudioTracks()[0];
+            
+            if (!audioTrack) return;
+            
+            const senders = connection.getSenders();
+            const audioSender = senders.find(sender => sender.track && sender.track.kind === 'audio');
+            
+            if (audioSender) {
+                audioSender.track.enabled = audioSharingEnabled[peerId] && localAudioEnabled;
+            }
+        }
+        
+        function updateMuteButtonUI(peerId) {
+            const muteBtn = document.getElementById(`mute-${peerId}`);
+            if (muteBtn) {
+                muteBtn.textContent = audioSharingEnabled[peerId] ? '🔊' : '🔇';
+                muteBtn.title = audioSharingEnabled[peerId] ? 'They can hear you' : 'They cannot hear you';
+                if (audioSharingEnabled[peerId]) {
+                    muteBtn.classList.remove('muted');
+                } else {
+                    muteBtn.classList.add('muted');
+                }
+            }
+        }
+        
+        function toggleLocalAudio() {
+            // Always show modal to select who can hear
+            showAudioSelectModal();
+        }
+        
+        function toggleLocalVideo() {
+            // Always show modal to select who can see
+            showAudioSelectModal();
+        }
+        
+        function updatePeerVideoTrack(peerId) {
+            if (!peerConnections[peerId] || !localStream) return;
+            
+            const connection = peerConnections[peerId].connection;
+            const videoTrack = localStream.getVideoTracks()[0];
+            
+            if (!videoTrack) return;
+            
+            const senders = connection.getSenders();
+            const videoSender = senders.find(sender => sender.track && sender.track.kind === 'video');
+            
+            if (videoSender) {
+                videoSender.track.enabled = videoSharingEnabled[peerId] && localVideoEnabled;
+            }
+        }
+        
+        function updateControlButtonUI() {
+            const audioBtn = document.getElementById('toggle-audio-btn');
+            const videoBtn = document.getElementById('toggle-video-btn');
+            
+            if (audioBtn) {
+                audioBtn.textContent = localAudioEnabled ? '🎤' : '🔇';
+                audioBtn.classList.remove('muted', 'active');
+                if (localAudioEnabled) {
+                    audioBtn.classList.add('active');
+                } else {
+                    audioBtn.classList.add('muted');
+                }
+            }
+            
+            if (videoBtn) {
+                videoBtn.textContent = localVideoEnabled ? '📹' : '📷';
+                videoBtn.classList.remove('muted', 'active');
+                if (localVideoEnabled) {
+                    videoBtn.classList.add('active');
+                } else {
+                    videoBtn.classList.add('muted');
+                }
+            }
+        }
+        
+        function showAudioSelectModal() {
+            const modal = document.getElementById('audio-select-modal');
+            const list = document.getElementById('audio-select-list');
+            
+            if (!gameState) return;
+            
+            const otherPlayers = gameState.players.filter(p => p.id !== socket.id);
+            
+            // Update master toggles
+            const masterAudioCb = document.getElementById('master-audio-cb');
+            const masterVideoCb = document.getElementById('master-video-cb');
+            const masterAudioToggle = document.getElementById('master-audio-toggle');
+            const masterVideoToggle = document.getElementById('master-video-toggle');
+            
+            if (masterAudioCb) {
+                masterAudioCb.checked = localAudioEnabled;
+                if (localAudioEnabled) {
+                    masterAudioToggle.classList.add('enabled');
+                } else {
+                    masterAudioToggle.classList.remove('enabled');
+                }
+            }
+            
+            if (masterVideoCb) {
+                masterVideoCb.checked = localVideoEnabled;
+                if (localVideoEnabled) {
+                    masterVideoToggle.classList.add('enabled');
+                } else {
+                    masterVideoToggle.classList.remove('enabled');
+                }
+            }
+            
+            list.innerHTML = otherPlayers.map(player => {
+                const peerId = player.id;
+                const audioEnabled = audioSharingEnabled[peerId] || false;
+                const videoEnabled = videoSharingEnabled[peerId] || false;
+                const anyEnabled = audioEnabled || videoEnabled;
+                return `
+                    <div class="audio-select-item ${anyEnabled ? 'selected' : ''}" 
+                         id="audio-item-${peerId}"
+                         style="display: block;">
+                        <div style="font-weight: bold; margin-bottom: 8px;">${player.name}</div>
+                        <div style="display: flex; gap: 10px; padding-left: 10px;">
+                            <label style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" 
+                                       id="audio-cb-${peerId}" 
+                                       ${audioEnabled ? 'checked' : ''}
+                                       onchange="togglePlayerAudio('${peerId}')">
+                                <span>🎤 Can hear me</span>
+                            </label>
+                            <label style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" 
+                                       id="video-cb-${peerId}" 
+                                       ${videoEnabled ? 'checked' : ''}
+                                       onchange="togglePlayerVideo('${peerId}')">
+                                <span>📹 Can see me</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            modal.classList.add('active');
+        }
+        
+        function closeAudioSelectModal() {
+            document.getElementById('audio-select-modal').classList.remove('active');
+        }
+        
+        function togglePlayerAudio(peerId) {
+            audioSharingEnabled[peerId] = !audioSharingEnabled[peerId];
+            updatePeerAudioTrack(peerId);
+            updateMuteButtonUI(peerId);
+            updateSelectItemUI(peerId);
+        }
+        
+        function togglePlayerVideo(peerId) {
+            videoSharingEnabled[peerId] = !videoSharingEnabled[peerId];
+            updatePeerVideoTrack(peerId);
+            updateSelectItemUI(peerId);
+        }
+        
+        function updateSelectItemUI(peerId) {
+            const item = document.getElementById(`audio-item-${peerId}`);
+            const audioCb = document.getElementById(`audio-cb-${peerId}`);
+            const videoCb = document.getElementById(`video-cb-${peerId}`);
+            
+            if (item) {
+                const anyEnabled = audioSharingEnabled[peerId] || videoSharingEnabled[peerId];
+                if (anyEnabled) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            }
+            
+            if (audioCb) audioCb.checked = audioSharingEnabled[peerId];
+            if (videoCb) videoCb.checked = videoSharingEnabled[peerId];
+        }
+        
+        function toggleAllSharing() {
+            if (!gameState) return;
+            
+            const otherPlayers = gameState.players.filter(p => p.id !== socket.id);
+            
+            // Check if all are enabled for both audio and video
+            const allEnabled = otherPlayers.every(p => 
+                audioSharingEnabled[p.id] && videoSharingEnabled[p.id]
+            );
+            
+            // Toggle all to opposite state
+            otherPlayers.forEach(player => {
+                audioSharingEnabled[player.id] = !allEnabled;
+                videoSharingEnabled[player.id] = !allEnabled;
+                updatePeerAudioTrack(player.id);
+                updatePeerVideoTrack(player.id);
+                updateMuteButtonUI(player.id);
+                updateSelectItemUI(player.id);
+            });
+        }
+        
+        function toggleMasterSharing(type) {
+            if (type === 'audio') {
+                localAudioEnabled = !localAudioEnabled;
+                if (localStream) {
+                    localStream.getAudioTracks().forEach(track => {
+                        track.enabled = localAudioEnabled;
+                    });
+                }
+                Object.keys(peerConnections).forEach(peerId => {
+                    updatePeerAudioTrack(peerId);
+                });
+            } else if (type === 'video') {
+                localVideoEnabled = !localVideoEnabled;
+                if (localStream) {
+                    localStream.getVideoTracks().forEach(track => {
+                        track.enabled = localVideoEnabled;
+                    });
+                }
+                Object.keys(peerConnections).forEach(peerId => {
+                    updatePeerVideoTrack(peerId);
+                });
+            }
+            updateControlButtonUI();
+            showAudioSelectModal(); // Refresh modal
         }
         
         // Clean up on page unload

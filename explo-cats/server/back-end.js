@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, '..')));
 
 // Game rooms storage
 const rooms = new Map();
+let aiPlayerCount = 0; // Global counter for AI players
 
 // Card types
 const CARD_TYPES = {
@@ -130,7 +131,8 @@ function createRoom(hostSocketId, hostName) {
             name: hostName,
             hand: [],
             alive: true,
-            isHost: true
+            isHost: true,
+            isAI: false
         }]]),
         deck: [],
         discardPile: [],
@@ -141,6 +143,87 @@ function createRoom(hostSocketId, hostName) {
     });
     
     return roomCode;
+}
+
+// Create AI player
+function addAIPlayer(roomCode) {
+    const room = rooms.get(roomCode);
+    if (!room || room.gameStarted) return null;
+    
+    aiPlayerCount++;
+    const aiId = `ai_${Date.now()}_${aiPlayerCount}`;
+    const aiName = `AI 🤖 ${String(aiPlayerCount).padStart(3, '0')}`;
+    
+    room.players.set(aiId, {
+        id: aiId,
+        name: aiName,
+        hand: [],
+        alive: true,
+        isHost: false,
+        isAI: true
+    });
+    
+    return { id: aiId, name: aiName };
+}
+
+// AI player logic - make automatic decisions
+function performAITurn(roomCode, aiId) {
+    const room = rooms.get(roomCode);
+    if (!room || !room.gameStarted) return;
+    
+    const ai = room.players.get(aiId);
+    if (!ai || !ai.alive) return;
+    
+    // AI strategy: play skip if available, otherwise draw
+    setTimeout(() => {
+        const skipCard = ai.hand.find(card => card.type === CARD_TYPES.SKIP);
+        
+        if (skipCard && Math.random() > 0.3) {
+            // 70% chance to play skip if available
+            const cardIndex = ai.hand.findIndex(c => c.id === skipCard.id);
+            ai.hand.splice(cardIndex, 1);
+            room.discardPile.push(skipCard);
+            console.log(`${ai.name} played Skip`);
+            nextTurn(roomCode);
+            broadcastGameState(roomCode);
+        } else {
+            // Draw a card
+            if (room.deck.length === 0) {
+                console.log(`${ai.name} - No cards to draw`);
+                return;
+            }
+            
+            const drawnCard = room.deck.pop();
+            console.log(`${ai.name} drew ${drawnCard.type}`);
+            
+            if (drawnCard.type === CARD_TYPES.EXPLODING_KITTEN) {
+                // Check if AI has defuse
+                const defuseIndex = ai.hand.findIndex(card => card.type === CARD_TYPES.DEFUSE);
+                
+                if (defuseIndex !== -1) {
+                    // AI has defuse - use it and place kitten back randomly
+                    const defuseCard = ai.hand.splice(defuseIndex, 1)[0];
+                    room.discardPile.push(defuseCard);
+                    console.log(`${ai.name} used Defuse!`);
+                    
+                    // Place kitten back randomly
+                    const randomPosition = Math.floor(Math.random() * (room.deck.length + 1));
+                    room.deck.splice(randomPosition, 0, drawnCard);
+                } else {
+                    // AI explodes
+                    ai.alive = false;
+                    ai.hand = [];
+                    console.log(`${ai.name} exploded! 💥`);
+                    io.to(roomCode).emit('ai-exploded', { name: ai.name });
+                }
+            } else {
+                ai.hand.push(drawnCard);
+            }
+            
+            nextTurn(roomCode);
+            broadcastGameState(roomCode);
+        }
+    }, 1500); // AI waits 1.5 seconds before acting
 }
 
 // Start the game
@@ -194,6 +277,16 @@ io.on('connection', (socket) => {
         const roomCode = createRoom(socket.id, playerName);
         socket.join(roomCode);
         socket.emit('room-created', { roomCode, playerName });
+        
+        // Send initial player list
+        const playerList = Array.from(rooms.get(roomCode).players.values()).map(p => ({
+            id: p.id,
+            name: p.name,
+            isHost: p.isHost,
+            isAI: p.isAI || false
+        }));
+        io.to(roomCode).emit('player-list-update', playerList);
+        
         console.log(`Room ${roomCode} created by ${playerName}`);
     });
     
@@ -216,7 +309,8 @@ io.on('connection', (socket) => {
             name: playerName,
             hand: [],
             alive: true,
-            isHost: false
+            isHost: false,
+            isAI: false
         });
         
         socket.join(roomCode);
@@ -226,7 +320,8 @@ io.on('connection', (socket) => {
         const playerList = Array.from(room.players.values()).map(p => ({
             id: p.id,
             name: p.name,
-            isHost: p.isHost
+            isHost: p.isHost,
+            isAI: p.isAI || false
         }));
         
         io.to(roomCode).emit('player-list-update', playerList);
@@ -247,8 +342,45 @@ io.on('connection', (socket) => {
             broadcastGameState(roomCode);
             io.to(roomCode).emit('game-started');
             console.log(`Game started in room ${roomCode}`);
+            
+            // Trigger first turn if it's an AI
+            const playerIds = Array.from(room.players.keys()).filter(id => room.players.get(id).alive);
+            const firstPlayer = room.players.get(playerIds[room.currentPlayerIndex]);
+            if (firstPlayer && firstPlayer.isAI) {
+                performAITurn(roomCode, firstPlayer.id);
+            }
         } else {
             socket.emit('error', 'Need at least 2 players to start');
+        }
+    });
+    
+    // Add AI player
+    socket.on('add-ai-player', (roomCode) => {
+        const room = rooms.get(roomCode);
+        
+        if (!room || room.host !== socket.id) {
+            socket.emit('error', 'Only host can add AI players');
+            return;
+        }
+        
+        if (room.gameStarted) {
+            socket.emit('error', 'Cannot add AI after game started');
+            return;
+        }
+        
+        const aiPlayer = addAIPlayer(roomCode);
+        if (aiPlayer) {
+            console.log(`AI player ${aiPlayer.name} added to room ${roomCode}`);
+            
+            // Notify all players in room
+            const playerList = Array.from(room.players.values()).map(p => ({
+                id: p.id,
+                name: p.name,
+                isHost: p.isHost,
+                isAI: p.isAI || false
+            }));
+            
+            io.to(roomCode).emit('player-list-update', playerList);
         }
     });
     
@@ -493,7 +625,8 @@ io.on('connection', (socket) => {
                     const playerList = Array.from(room.players.values()).map(p => ({
                         id: p.id,
                         name: p.name,
-                        isHost: p.isHost
+                        isHost: p.isHost,
+                        isAI: p.isAI || false
                     }));
                     io.to(roomCode).emit('player-list-update', playerList);
                     
@@ -531,6 +664,12 @@ function nextTurn(roomCode) {
         currentPlayerId: playerIds[room.currentPlayerIndex],
         currentPlayerName: room.players.get(playerIds[room.currentPlayerIndex]).name
     });
+    
+    // Check if current player is AI and trigger their turn
+    const currentPlayer = room.players.get(playerIds[room.currentPlayerIndex]);
+    if (currentPlayer && currentPlayer.isAI) {
+        performAITurn(roomCode, currentPlayer.id);
+    }
 }
 
 function checkWinner(roomCode) {
@@ -558,9 +697,12 @@ function broadcastGameState(roomCode) {
     
     const playerIds = Array.from(room.players.keys());
     
-    // Send personalized game state to each player
+    // Send personalized game state to each player (only real players, not AI)
     playerIds.forEach(playerId => {
         const player = room.players.get(playerId);
+        
+        // Skip AI players - they don't have sockets
+        if (player.isAI) return;
         
         const gameState = {
             myHand: player.hand,
@@ -571,7 +713,8 @@ function broadcastGameState(roomCode) {
                 name: p.name,
                 cardCount: p.hand.length,
                 alive: p.alive,
-                isHost: p.isHost
+                isHost: p.isHost,
+                isAI: p.isAI || false
             })),
             currentPlayerIndex: room.currentPlayerIndex,
             currentPlayerId: playerIds[room.currentPlayerIndex],
